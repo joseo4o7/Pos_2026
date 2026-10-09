@@ -1,0 +1,682 @@
+/* ==========================================
+   1. RESET Y BASE GENERAL
+   ========================================== */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f4f4f4;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+/* Header superior */
+header, .header, .top-bar {
+  height: 45px;
+  padding: 8px 20px !important;
+  margin-bottom: 0 !important;
+}
+
+h1, .top-bar h1 {
+  font-size: 18px !important;
+  margin: 0 !important;
+}
+
+/* ==========================================
+   2. ESTRUCTURA POS PRINCIPAL & SIDEBAR
+   ========================================== */
+.pos-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.sidebar, .sidebar-container {
+  width: 200px !important;
+  min-width: 190px !important;
+  padding: 10px !important;
+  height: 100vh;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  background: #0f172a;
+  overflow-y: auto !important;
+  box-sizing: border-box;
+}
+
+.sidebar-menu, .sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.sidebar button, .sidebar a {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  width: 100%;
+  border-radius: 6px;
+  border: none;
+  background: #1e293b;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar button:hover, .sidebar a:hover {
+  background: #334155;
+}
+
+/* Botón Rojo de Cierre de Caja siempre visible */
+.btn-cierre-caja, 
+.sidebar button:last-child {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+  background-color: #ef4444 !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+.btn-cierre-caja:hover {
+  background-color: #dc2626 !important;
+}
+
+/* Área de Trabajo Central */
+.pos-top {
+  flex: 1;
+  height: calc(100vh - 45px);
+  max-height: calc(100vh - 45px);
+  display: grid;
+  grid-template-columns: 1fr minmax(320px, 400px);
+  gap: 12px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+/* ==========================================
+   3. SECCIÓN IZQUIERDA: PRODUCTOS Y WIDGETS
+   ========================================== */
+.products-section {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.products-section h2 {
+  margin: 0 0 8px 0 !important;
+  font-size: 18px !important;
+  flex-shrink: 0;
+}
+
+/* Barra superior de widgets estilo tarjetas */
+.pos-top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.pos-actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+   padding-bottom: 48px;
+}
+
+/* Buscador de productos */
+.search-input-container,
+.products-section input[type="text"] {
+  flex-shrink: 0;
+  height: 36px;
+  font-size: 13px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-input-container input:focus,
+.products-section input[type="text"]:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* ==========================================
+   4. CONTENEDOR Y TABLA DE PRODUCTOS (CORREGIDO)
+   ========================================== */
+.products-table-container,
+.table-container {
+  flex: 1 1 0px !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;  /* Scroll Vertical para ver más ítems */
+  overflow-x: auto !important;  /* Scroll Horizontal si la pantalla es estrecha */
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
+/* Estilos dinámicos de la Tabla */
+.product-table,
+.products-table {
+  width: 100%;
+  min-width: 520px;            /* Ancho mínimo para mantener visible la columna Código */
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.product-table thead,
+.products-table thead {
+  background: #1f2937;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.product-table th,
+.product-table td,
+.products-table th,
+.products-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;          /* Mantiene las celdas alineadas en una línea */
+}
+
+.product-table tbody tr:hover,
+.products-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* Botones de la tabla organizados horizontalmente */
+.products-table td button,
+.product-table td button {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  margin-right: 4px;
+}
+
+/* ==========================================
+   5. SECCIÓN DERECHA: CARRITO Y VENTAS
+   ========================================== */
+.cart-section {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.cart-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cart-wrapper h2 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.cart-search-input,
+.cart-wrapper input[type="text"],
+.cart-section input[type="text"] {
+  flex-shrink: 0;
+  height: 36px;
+  margin-bottom: 8px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+.cart-products {
+  flex: 1 1 0px !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+  padding-right: 2px;
+  margin-bottom: 8px;
+}
+
+.empty-cart-text {
+  text-align: center;
+  color: #9ca3af;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.cart-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 6px;
+}
+
+.cart-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.cart-item-header h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.cart-price {
+  font-size: 14px;
+  font-weight: bold;
+  color: #111827;
+}
+
+.cart-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.quantity-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qty-button {
+  width: 24px;
+  height: 24px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+}
+
+.qty-number {
+  font-size: 13px;
+  font-weight: bold;
+  min-width: 16px;
+  text-align: center;
+}
+
+.remove-button {
+  padding: 4px 8px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* ==========================================
+   6. PANEL INFERIOR DE PAGO
+   ========================================== */
+.cart-footer {
+  flex-shrink: 0 !important;
+  border-top: 2px dashed #e2e8f0;
+  padding-top: 8px;
+  padding-bottom: 29.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: white;
+  margin-top: auto;
+}
+
+.total-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.total-amount {
+  font-size: 20px;
+  color: #16a34a;
+  font-weight: 800;
+}
+
+.payment-row {
+  display: flex;
+  gap: 6px;
+  padding-bottom: "48px",
+}
+
+.payment-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-field label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.payment-field input,
+.payment-field select {
+  height: 32px !important;
+  font-size: 12px !important;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0 6px;
+}
+
+.change-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: bold;
+  background: #f0fdf4;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+}
+
+.btn-finish-sale {
+  width: 100% !important;
+  padding: 8px;
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.action-buttons-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.action-buttons-row .btn-finish-sale {
+  flex: 1;
+  padding: 8px 4px !important;
+  font-size: 12px !important;
+}
+
+/* ==========================================
+   7. MODALES Y VENTAS RÁPIDAS
+   ========================================== */
+.btn-crear-producto {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 350px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #374151;
+}
+
+.form-group input {
+  padding: 6px !important;
+  font-size: 12px !important;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  height: 32px !important;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-guardar-mongo {
+  flex: 1;
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-cancelar {
+  flex: 1;
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ==========================================
+   IMPRESIÓN DEL TICKET
+   El diseño del ticket está en Ticket.jsx
+   ========================================== */
+
+/* El ticket no se muestra normalmente en el POS */
+#ticket {
+  display: none;
+}
+
+
+/* ==========================================
+   IMPRESIÓN
+   ========================================== */
+
+@media print {
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 80mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  /* Ocultar el resto del sistema */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Mostrar solamente el ticket */
+  #ticket,
+  #ticket * {
+    visibility: visible !important;
+  }
+
+  #ticket {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+
+    width: 80mm !important;
+    max-width: 80mm !important;
+
+    margin: 0 !important;
+
+    background: white !important;
+    color: black !important;
+
+    box-sizing: border-box !important;
+  }
+}
+
+
+
+/* ==========================================
+   CARRITO: PRECIO UNITARIO Y SUBTOTAL
+   ========================================== */
+
+.cart-item-prices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(85px, 22%) minmax(85px, 25%);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.cart-item-name {
+  min-width: 0;
+}
+
+.cart-item-name h4 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cart-unit-price,
+.cart-line-total {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.cart-price-label {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.cart-unit-price strong,
+.cart-line-total strong {
+  font-size: 15px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.cart-edit-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.cart-edit-price input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 15px;
+  text-align: right;
+}
+
+.cart-item .cart-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 480px) {
+  .cart-item-prices {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(70px, 24%)
+      minmax(75px, 26%);
+    gap: 5px;
+  }
+
+  .cart-unit-price strong,
+  .cart-line-total strong {
+    font-size: 13px;
+  }
+
+  .cart-price-label {
+    font-size: 10px;
+  }
+}
