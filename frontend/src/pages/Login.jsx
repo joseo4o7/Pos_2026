@@ -1,6 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
 
+// Definimos la URL base con respaldo (fallback) por si Vite no lee la variable .env
+const API_URL = import.meta.env.VITE_API_URL || "https://pos-2026-yta1.onrender.com";
+
 function Login({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -8,7 +11,7 @@ function Login({ onLogin }) {
   const login = async () => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/users/login`,
+        `${API_URL}/api/users/login`,
         {
           username,
           password,
@@ -19,9 +22,8 @@ function Login({ onLogin }) {
 
       alert("Bienvenido " + response.data.user.fullName);
 
-      // IMPORTANTE:
       // enviamos usuario Y token a App.jsx
-onLogin(response.data.user, response.data.token);
+      onLogin(response.data.user, response.data.token);
 
     } catch (error) {
       console.error("ERROR LOGIN:", error);

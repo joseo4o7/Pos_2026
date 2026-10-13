@@ -53,7 +53,7 @@ ipcMain.handle("get-printers", async () => {
 
 
 // ======================================================
-// FUNCIONES ESC/POS
+// FUNCIONES ESC/POS (CON APERTURA DE CAJÓN INTEGRADA)
 // ======================================================
 
 function crearTicketESC(ticket) {
@@ -62,8 +62,12 @@ function crearTicketESC(ticket) {
 
   let data = "";
 
-  // Inicializar impresora
+  // 1. INICIALIZAR IMPRESORA
   data += ESC + "@";
+
+  // 2. COMANDO ESC/POS PARA ABRIR EL CAJÓN MONEDERO (Drawer Kick)
+  // Pin 2 (estándar RJ11/RJ12), pulso de 50ms ON / 250ms OFF
+  data += ESC + "p" + "\x00" + "\x19" + "\xFA";
 
   // Centrar
   data += ESC + "a" + "\x01";
@@ -168,7 +172,7 @@ function crearTicketESC(ticket) {
   data += ESC + "a" + "\x01";
 
   data += "\n";
-  data += "¡Gracias por su compra!\n";
+  data += "Gracias por su compra\n";
   data += "Que tenga un excelente día.\n";
 
   // Avanzar papel
