@@ -1,9 +1,33 @@
-import React, { memo, useMemo, useState } from "react";
+import React, { memo, useMemo, useState, useRef } from "react";
 import axios from "axios";
 
 function ProductTable({ products, search, addToCart }) {
   const [editingId, setEditingId] = useState(null);
   const [editPrice, setEditPrice] = useState("");
+  const [savingPrice, setSavingPrice] = useState(false);
+
+  // Estado para evitar doble clic accidental en "+ Agregar"
+  const [addingId, setAddingId] = useState(null);
+  const addLockRef = useRef(false);
+
+  // Estado para confirmar eliminación sin usar window.confirm()
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  // ==========================================
+  // AGREGAR AL CARRITO (PROTEGIDO CONTRA DOBLE CLIC)
+  // ==========================================
+  const handleSafeAddToCart = (product) => {
+    if (addLockRef.current) return;
+
+    addLockRef.current = true;
+    setAddingId(product._id);
+    addToCart(product);
+
+    setTimeout(() => {
+      addLockRef.current = false;
+      setAddingId(null);
+    }, 350);
+  };
 
   // ==========================================
   // FILTRADO OPTIMIZADO
@@ -13,7 +37,6 @@ function ProductTable({ products, search, addToCart }) {
       .trim()
       .toLowerCase();
 
-    // Si no hay búsqueda, mostramos todos
     if (!searchValue) {
       return products;
     }
@@ -30,30 +53,27 @@ function ProductTable({ products, search, addToCart }) {
   }, [products, search]);
 
   // ==========================================
-  // ELIMINAR PRODUCTO
+  // ELIMINAR PRODUCTO (SIN VENTANA NATIVA DE WINDOWS)
   // ==========================================
-  const handleDeleteProduct = async (id, name) => {
-    const confirmDelete = window.confirm(
-      `¿Seguro que deseas eliminar "${name}"?`
-    );
+  const handleDeleteProduct = async (id) => {
+    // Primer clic: pide confirmación visual en el botón
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      setTimeout(() => {
+        setConfirmDeleteId((prev) => (prev === id ? null : prev));
+      }, 3000);
+      return;
+    }
 
-    if (!confirmDelete) return;
-
+    // Segundo clic: ejecuta la eliminación
+    setConfirmDeleteId(null);
     try {
       await axios.delete(
         `${import.meta.env.VITE_API_URL}/api/products/${id}`
       );
-
-      // Socket.io actualizará la lista
     } catch (error) {
-      console.error(
-        "Error al eliminar el producto:",
-        error
-      );
-
-      alert(
-        "Error al eliminar el producto de la base de datos."
-      );
+      console.error("Error al eliminar el producto:", error);
+      alert("Error al eliminar el producto de la base de datos.");
     }
   };
 
@@ -61,11 +81,14 @@ function ProductTable({ products, search, addToCart }) {
   // GUARDAR PRECIO
   // ==========================================
   const handleSavePrice = async (id) => {
+    if (savingPrice) return;
+
     if (!editPrice || Number(editPrice) <= 0) {
       alert("Ingresa un precio válido");
       return;
     }
 
+    setSavingPrice(true);
     try {
       await axios.put(
         `${import.meta.env.VITE_API_URL}/api/products/${id}`,
@@ -76,28 +99,24 @@ function ProductTable({ products, search, addToCart }) {
 
       setEditingId(null);
       setEditPrice("");
-
-      // Socket.io actualizará la lista
     } catch (error) {
-      console.error(
-        "Error al actualizar precio:",
-        error
-      );
-
+      console.error("Error al actualizar precio:", error);
       alert("Error al actualizar el precio.");
+    } finally {
+      setSavingPrice(false);
     }
   };
 
   return (
     <table
-  className="products-table"
-  style={{
-    width: "100%",
-    maxWidth: "100%",
-    tableLayout: "fixed",
-    borderCollapse: "collapse",
-  }}
->
+      className="products-table"
+      style={{
+        width: "100%",
+        maxWidth: "100%",
+        tableLayout: "fixed",
+        borderCollapse: "collapse",
+      }}
+    >
       <thead>
         <tr>
           <th style={{ width: "22%" }}>Código</th>
@@ -111,7 +130,6 @@ function ProductTable({ products, search, addToCart }) {
       <tbody>
         {filteredProducts.map((product) => (
           <tr key={product._id}>
-
             {/* CÓDIGO */}
             <td
               style={{
@@ -119,37 +137,41 @@ function ProductTable({ products, search, addToCart }) {
                 wordBreak: "break-word",
               }}
             >
-  {product.barcode || "S/C"}
-</td>
+              {product.barcode || "S/C"}
+            </td>
 
             {/* NOMBRE */}
             <td
               style={{
-              overflowWrap: "anywhere",
-              wordBreak: "break-word",
-            }}
-          >
-  {product.name}
-</td>
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+              }}
+            >
+              {product.name}
+            </td>
 
             {/* PRECIO */}
             <td>
               {editingId === product._id ? (
-
                 <div
                   style={{
-                  display: "flex",
-                  gap: "6px",
-                  flexWrap: "wrap",
-                  width: "100%",
-                }}
-              >
+                    display: "flex",
+                    gap: "6px",
+                    flexWrap: "wrap",
+                    width: "100%",
+                  }}
+                >
                   <input
                     type="number"
                     value={editPrice}
-                    onChange={(e) =>
-                      setEditPrice(e.target.value)
-                    }
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSavePrice(product._id);
+                      if (e.key === "Escape") {
+                        setEditingId(null);
+                        setEditPrice("");
+                      }
+                    }}
                     style={{
                       width: "80px",
                       padding: "2px 4px",
@@ -159,15 +181,15 @@ function ProductTable({ products, search, addToCart }) {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      handleSavePrice(product._id)
-                    }
+                    disabled={savingPrice}
+                    onClick={() => handleSavePrice(product._id)}
                     style={{
                       backgroundColor: "#16a34a",
                       color: "#fff",
                       border: "none",
                       borderRadius: "3px",
-                      cursor: "pointer",
+                      cursor: savingPrice ? "not-allowed" : "pointer",
+                      opacity: savingPrice ? 0.6 : 1,
                     }}
                   >
                     ✓
@@ -175,6 +197,7 @@ function ProductTable({ products, search, addToCart }) {
 
                   <button
                     type="button"
+                    disabled={savingPrice}
                     onClick={() => {
                       setEditingId(null);
                       setEditPrice("");
@@ -190,9 +213,7 @@ function ProductTable({ products, search, addToCart }) {
                     ✕
                   </button>
                 </div>
-
               ) : (
-
                 <span
                   onClick={() => {
                     setEditingId(product._id);
@@ -201,23 +222,16 @@ function ProductTable({ products, search, addToCart }) {
                   title="Haz clic para editar precio rápidamente"
                   style={{
                     cursor: "pointer",
-                    borderBottom:
-                      "1px dashed #0284c7",
+                    borderBottom: "1px dashed #0284c7",
                   }}
                 >
-                  $
-                  {Number(product.price || 0)
-                    .toLocaleString("es-CL")}{" "}
-                  ✏️
+                  ${Number(product.price || 0).toLocaleString("es-CL")} ✏️
                 </span>
-
               )}
             </td>
 
             {/* STOCK */}
-            <td>
-              {product.stock}
-            </td>
+            <td>{product.stock}</td>
 
             {/* ACCIONES */}
             <td>
@@ -227,47 +241,48 @@ function ProductTable({ products, search, addToCart }) {
                   gap: "6px",
                 }}
               >
+                <button
+                  type="button"
+                  disabled={addingId === product._id}
+                  onClick={() => handleSafeAddToCart(product)}
+                  style={{
+                    backgroundColor:
+                      addingId === product._id ? "#1d4ed8" : "#2563eb",
+                    color: "#fff",
+                    border: "none",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    cursor:
+                      addingId === product._id ? "not-allowed" : "pointer",
+                    opacity: addingId === product._id ? 0.75 : 1,
+                  }}
+                >
+                  {addingId === product._id ? "✓" : "+ Agregar"}
+                </button>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    addToCart(product)
+                  onClick={() => handleDeleteProduct(product._id)}
+                  title={
+                    confirmDeleteId === product._id
+                      ? "Haz clic nuevamente para confirmar"
+                      : "Eliminar producto"
                   }
                   style={{
-                    backgroundColor: "#2563eb",
+                    backgroundColor:
+                      confirmDeleteId === product._id ? "#b91c1c" : "#ef4444",
                     color: "#fff",
                     border: "none",
                     padding: "4px 8px",
                     borderRadius: "4px",
                     cursor: "pointer",
+                    fontWeight: confirmDeleteId === product._id ? "bold" : "normal",
                   }}
                 >
-                  + Agregar
+                  {confirmDeleteId === product._id ? "¿Borrar?" : "🗑️"}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleDeleteProduct(
-                      product._id,
-                      product.name
-                    )
-                  }
-                  style={{
-                    backgroundColor: "#ef4444",
-                    color: "#fff",
-                    border: "none",
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                  }}
-                >
-                  🗑️
-                </button>
-
               </div>
             </td>
-
           </tr>
         ))}
       </tbody>
@@ -275,7 +290,4 @@ function ProductTable({ products, search, addToCart }) {
   );
 }
 
-// ==========================================
-// EVITA RENDERIZADOS INNECESARIOS
-// ==========================================
 export default memo(ProductTable);

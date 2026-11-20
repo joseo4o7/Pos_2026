@@ -1,9 +1,19 @@
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Lee dinámicamente de localStorage o usa el .env / default
+const getApiUrl = () => {
+  const savedIp = localStorage.getItem("SERVER_IP");
+  if (savedIp) {
+    if (savedIp.startsWith("http://") || savedIp.startsWith("https://")) {
+      return savedIp.endsWith("/api") ? savedIp.slice(0, -4) : savedIp;
+    }
+    return `http://${savedIp}:5000`;
+  }
+  return import.meta.env.VITE_API_URL || "http://localhost:5000";
+};
+
+const API_URL = getApiUrl();
 
 const initialForm = {
   businessName: "",
@@ -18,24 +28,25 @@ const initialForm = {
 
 export default function Settings({ user }) {
   const [form, setForm] = useState(initialForm);
+  const [serverIp, setServerIp] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
+    // 1. Cargar la IP actual guardada en el equipo
+    const currentIp = localStorage.getItem("SERVER_IP") || "";
+    setServerIp(currentIp);
+
+    // 2. Cargar la configuración desde el Backend
     const fetchSettings = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        const response = await axios.get(
-          `${API_URL}/api/settings`,
-          {
-            headers: token
-              ? { Authorization: `Bearer ${token}` }
-              : {},
-          }
-        );
+        const response = await axios.get(`${API_URL}/api/settings`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
 
         if (response.data) {
           setForm({
@@ -56,6 +67,12 @@ export default function Settings({ user }) {
 
     fetchSettings();
   }, []);
+
+  const handleSaveIp = () => {
+    localStorage.setItem("SERVER_IP", serverIp.trim());
+    alert("Dirección IP del servidor actualizada. La aplicación se recargará.");
+    window.location.reload();
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -86,9 +103,7 @@ export default function Settings({ user }) {
           iva: Number(form.iva),
         },
         {
-          headers: token
-            ? { Authorization: `Bearer ${token}` }
-            : {},
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
 
@@ -140,8 +155,7 @@ export default function Settings({ user }) {
 
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns:
-      "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
     gap: 16,
   };
 
@@ -168,25 +182,52 @@ export default function Settings({ user }) {
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <h2
-          style={{
-            margin: "0 0 8px",
-            color: "#111827",
-          }}
-        >
+        <h2 style={{ margin: "0 0 8px", color: "#111827" }}>
           Configuración
         </h2>
 
-        <p
-          style={{
-            margin: "0 0 24px",
-            color: "#6b7280",
-            fontSize: 14,
-          }}
-        >
-          Administra los datos del negocio y la configuración
-          general del sistema.
+        <p style={{ margin: "0 0 24px", color: "#6b7280", fontSize: 14 }}>
+          Administra los datos del negocio y la configuración general del sistema.
         </p>
+
+        {/* 🟢 SECCIÓN NUEVA: CONFIGURACIÓN DE RED / IP DEL SERVIDOR */}
+        <section style={sectionStyle}>
+          <h3 style={{ margin: "0 0 12px", fontSize: 16 }}>
+            Conexión de Red Local
+          </h3>
+          <p style={{ margin: "0 0 16px", color: "#6b7280", fontSize: 13 }}>
+            Configura la dirección del servidor local de la tienda. En la Caja 1 deja <strong>localhost</strong>. En la Caja 2 escribe la IP de la Caja 1 (Ej: 192.168.1.15).
+          </p>
+
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+            <label style={{ flex: 1 }}>
+              <span style={labelStyle}>IP / URL del Servidor</span>
+              <input
+                style={fieldStyle}
+                type="text"
+                placeholder="Ej: 192.168.1.15 o localhost"
+                value={serverIp}
+                onChange={(e) => setServerIp(e.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={handleSaveIp}
+              style={{
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 18px",
+                background: "#059669",
+                color: "#ffffff",
+                fontWeight: 600,
+                cursor: "pointer",
+                height: 42,
+              }}
+            >
+              Guardar IP
+            </button>
+          </div>
+        </section>
 
         <form onSubmit={handleSubmit}>
           <section style={sectionStyle}>
@@ -196,9 +237,7 @@ export default function Settings({ user }) {
 
             <div style={gridStyle}>
               <label>
-                <span style={labelStyle}>
-                  Nombre del negocio
-                </span>
+                <span style={labelStyle}>Nombre del negocio</span>
                 <input
                   style={fieldStyle}
                   name="businessName"
@@ -229,9 +268,7 @@ export default function Settings({ user }) {
               </label>
 
               <label>
-                <span style={labelStyle}>
-                  Correo electrónico
-                </span>
+                <span style={labelStyle}>Correo electrónico</span>
                 <input
                   style={fieldStyle}
                   type="email"
@@ -242,9 +279,7 @@ export default function Settings({ user }) {
               </label>
 
               <label style={{ gridColumn: "1 / -1" }}>
-                <span style={labelStyle}>
-                  URL del logo (opcional)
-                </span>
+                <span style={labelStyle}>URL del logo (opcional)</span>
                 <input
                   style={fieldStyle}
                   name="logo"
@@ -270,18 +305,10 @@ export default function Settings({ user }) {
                   value={form.currency}
                   onChange={handleChange}
                 >
-                  <option value="CLP">
-                    Peso chileno (CLP)
-                  </option>
-                  <option value="USD">
-                    Dólar estadounidense (USD)
-                  </option>
-                  <option value="ARS">
-                    Peso argentino (ARS)
-                  </option>
-                  <option value="PEN">
-                    Sol peruano (PEN)
-                  </option>
+                  <option value="CLP">Peso chileno (CLP)</option>
+                  <option value="USD">Dólar estadounidense (USD)</option>
+                  <option value="ARS">Peso argentino (ARS)</option>
+                  <option value="PEN">Sol peruano (PEN)</option>
                 </select>
               </label>
 
@@ -308,18 +335,10 @@ export default function Settings({ user }) {
                   value={form.timezone}
                   onChange={handleChange}
                 >
-                  <option value="America/Santiago">
-                    Chile continental (Santiago)
-                  </option>
-                  <option value="America/Punta_Arenas">
-                    Magallanes
-                  </option>
-                  <option value="America/Easter">
-                    Isla de Pascua
-                  </option>
-                  <option value="America/Buenos_Aires">
-                    Argentina
-                  </option>
+                  <option value="America/Santiago">Chile continental (Santiago)</option>
+                  <option value="America/Punta_Arenas">Magallanes</option>
+                  <option value="America/Easter">Isla de Pascua</option>
+                  <option value="America/Buenos_Aires">Argentina</option>
                   <option value="America/Lima">Perú</option>
                   <option value="UTC">UTC</option>
                 </select>
@@ -375,9 +394,7 @@ export default function Settings({ user }) {
                 cursor: saving ? "wait" : "pointer",
               }}
             >
-              {saving
-                ? "Guardando..."
-                : "Guardar configuración"}
+              {saving ? "Guardando..." : "Guardar configuración"}
             </button>
           </div>
         </form>

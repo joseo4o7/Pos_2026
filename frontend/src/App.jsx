@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 import Setup from "./pages/Setup";
@@ -35,6 +35,33 @@ function App() {
 
   // Usuario actualmente conectado
   const [user, setUser] = useState(null);
+
+  // =====================================================
+  // ALERTA GLOBAL (REEMPLAZO DE window.alert PARA ELECTRON)
+  // =====================================================
+
+  const [alertaGlobal, setAlertaGlobal] = useState(null);
+  const alertTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    window.alert = (mensaje) => {
+      setAlertaGlobal(String(mensaje));
+
+      if (alertTimeoutRef.current) {
+        clearTimeout(alertTimeoutRef.current);
+      }
+
+      alertTimeoutRef.current = setTimeout(() => {
+        setAlertaGlobal(null);
+      }, 3000);
+    };
+
+    return () => {
+      if (alertTimeoutRef.current) {
+        clearTimeout(alertTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // =====================================================
   // MONTO BASE DE CAJA
@@ -101,44 +128,49 @@ function App() {
   };
 
   // =====================================================
-  // PANTALLA DE CARGA
+  // RENDERIZADO CONDICIONAL DE PANTALLAS
   // =====================================================
 
-  if (loading) {
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div style={styles.loadingContainer}>
+          <h2>Cargando POS...</h2>
+        </div>
+      );
+    }
+
+    if (!initialized) {
+      return <Setup onFinish={checkSystem} />;
+    }
+
+    if (!user) {
+      return <Login onLogin={handleLogin} />;
+    }
+
     return (
-      <div style={styles.loadingContainer}>
-        <h2>Cargando POS...</h2>
-      </div>
+      <Dashboard
+        user={user}
+        montoBase={montoBase}
+        setMontoBase={setMontoBase}
+        onLogout={handleLogout}
+      />
     );
-  }
-
-  // =====================================================
-  // PRIMER USO DEL SISTEMA
-  // =====================================================
-
-  if (!initialized) {
-    return <Setup onFinish={checkSystem} />;
-  }
-
-  // =====================================================
-  // LOGIN
-  // =====================================================
-
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  // =====================================================
-  // DASHBOARD / POS
-  // =====================================================
+  };
 
   return (
-    <Dashboard
-      user={user}
-      montoBase={montoBase}
-      setMontoBase={setMontoBase}
-      onLogout={handleLogout}
-    />
+    <>
+      {alertaGlobal && (
+        <div
+          onClick={() => setAlertaGlobal(null)}
+          style={styles.toastAlert}
+        >
+          {alertaGlobal}
+        </div>
+      )}
+
+      {renderContent()}
+    </>
   );
 }
 
@@ -153,6 +185,22 @@ const styles = {
     alignItems: "center",
     height: "100vh",
     backgroundColor: "#f4f6f8",
+    fontFamily: "sans-serif",
+  },
+  toastAlert: {
+    position: "fixed",
+    top: "20px",
+    right: "20px",
+    backgroundColor: "#1e293b",
+    color: "#ffffff",
+    padding: "14px 22px",
+    borderRadius: "8px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+    zIndex: 99999,
+    fontSize: "15px",
+    fontWeight: "500",
+    cursor: "pointer",
+    borderLeft: "5px solid #22c55e",
     fontFamily: "sans-serif",
   },
 };
